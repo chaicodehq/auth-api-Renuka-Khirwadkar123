@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { User } from '../models/user.model.js';
+import {User} from '../models/user.model.js';
 import { signToken } from '../utils/jwt.js';
 
 /**
@@ -14,6 +14,24 @@ import { signToken } from '../utils/jwt.js';
 export async function register(req, res, next) {
   try {
     // Your code here
+
+    // 1. Extract fields
+    const { name, email, password } = req.body;
+
+    // 2. Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        error: { message: "Email already exists" }
+      });
+    }
+
+    // 3. Create user
+    const user = await User.create({ name, email, password });
+
+    // 4. Return response
+    return res.status(201).json({ user });
+
   } catch (error) {
     next(error);
   }
@@ -33,6 +51,39 @@ export async function register(req, res, next) {
 export async function login(req, res, next) {
   try {
     // Your code here
+
+    // 1. Extract fields
+    const { email, password } = req.body;
+
+    // 2. Find user with password
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({
+        error: { message: "Invalid credentials" }
+      });
+    }
+
+    // 4. Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        error: { message: "Invalid credentials" }
+      });
+    }
+
+    // 6. Generate token
+    const token = signToken({
+      userId: user._id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Remove password before sending user
+    user.password = undefined;
+
+    // 7. Return response
+    return res.status(200).json({ token, user });
+
   } catch (error) {
     next(error);
   }
@@ -47,6 +98,9 @@ export async function login(req, res, next) {
 export async function me(req, res, next) {
   try {
     // Your code here
+
+    return res.status(200).json({ user: req.user });
+
   } catch (error) {
     next(error);
   }

@@ -15,5 +15,22 @@
 export function requireRole(...roles) {
   return (req, res, next) => {
     // Your code here
+
+    // Check if user is authenticated
+    if (!req.user) {
+      return res.status(401).json({
+        error: { message: "Not authenticated" }
+      });
+    }
+
+    // Check if user has required role
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: { message: "Forbidden" }
+      });
+    }
+
+    // Proceed to next middleware
+    next();
   };
 }

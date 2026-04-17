@@ -18,4 +18,26 @@ import { notFound } from './middlewares/notFound.middleware.js';
  */
 export function createApp() {
   // Your code here
+  const app = express();
+
+  // Middleware to parse JSON
+  app.use(express.json());
+
+  app.get('/health', (req, res) => {
+    res.json({ ok: true });
+  });
+
+  // Mount auth routes
+  app.use('/api/auth', authRoutes);
+
+  // Mount user routes
+  app.use('/api/users', userRoutes);
+
+  // Not found middleware
+  app.use(notFound);
+
+  // Error handler
+  app.use(errorHandler);
+
+  return app;
 }
