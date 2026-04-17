@@ -29,8 +29,12 @@ export async function register(req, res, next) {
     // 3. Create user
     const user = await User.create({ name, email, password });
 
+    // Remove password before sending response
+    const userObj = user.toObject();
+    delete userObj.password;
+
     // 4. Return response
-    return res.status(201).json({ user });
+    return res.status(201).json({ user:userObj  });
 
   } catch (error) {
     next(error);
